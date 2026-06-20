@@ -24,7 +24,9 @@ client = Client(
 )
 
 
-def stream_agent(messages: list[dict], system_prompt: str = "", tools: list = []) -> str:
+def stream_agent(
+    messages: list[dict], system_prompt: str = "", tools: list = []
+) -> str:
     all_messages = (
         [{"role": "system", "content": system_prompt}] + messages
         if system_prompt
@@ -76,7 +78,7 @@ def run_debate(
     for round_num in range(max_rounds):
         print(f"\n--- Round {round_num + 1} ---")
 
-        print(f"\n{speaker_a_name} (FOR): ", end="", flush=True)
+        print(f"\n{speaker_a_name} : ", end="", flush=True)
         a_response = stream_agent(
             (
                 speaker_a_msgs
@@ -90,7 +92,7 @@ def run_debate(
         speaker_a_msgs.append({"role": "assistant", "content": a_response})
         transcript.append((speaker_a_name, a_response))
 
-        print(f"\n{speaker_b_name} (AGAINST): ", end="", flush=True)
+        print(f"\n{speaker_b_name} : ", end="", flush=True)
         b_response = stream_agent(
             (
                 speaker_b_msgs + format_opponent_argument(speaker_a_name, a_response)
