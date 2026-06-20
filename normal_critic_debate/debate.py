@@ -6,10 +6,18 @@ from normal_critic_debate.debate_system_prompts import (
     CRITIC_SYSTEM_PROMPT,
     JUDGE_SYSTEM_PROMPT,
 )
+from tui_formatter.formatter import (
+    print_claim,
+    print_speaker_response,
+    print_thinking,
+    print_verdict,
+    prompt_claim,
+)
+from tui_formatter.roles import CRITIC, JUDGE, PROPOSER
 
 load_dotenv()
 MODEL = "glm-5.1:cloud"
-
+DEFAULT_ROUNDS = 3
 
 client = Client(
     host=os.getenv("OLLAMA_API_URL", "http://localhost:11434"),
@@ -35,14 +43,16 @@ def call_agent(messages: list[dict], system_prompt: str = "", tools: list = []) 
     return response.message.content if response.message else ""
 
 
-ROUNDS = 3
-
-
 def format_proposer_arguments(proposer_response: str) -> list[dict]:
     """Wrap the proposer's response as a user message for the critic."""
     if not proposer_response:
         return []
-    return [{"role": "user", "content": "The proposer's arguments are: " + proposer_response}]
+    return [
+        {
+            "role": "user",
+            "content": "The proposer's arguments are: " + proposer_response,
+        }
+    ]
 
 
 def format_critic_arguments(critic_response: str) -> list[dict]:
@@ -72,48 +82,42 @@ def format_judge_arguments(
     return [{"role": "user", "content": debate_summary}]
 
 
-def run_debate(claim: str):
+def run_debate(claim: str, rounds: int = DEFAULT_ROUNDS) -> tuple[str, str, str]:
     proposer_messages = [{"role": "user", "content": claim}]
     critic_messages = []
     critic_response = ""
     proposer_response = ""
-    
-    print("Starting debate on the claim:", claim)
-    for _round in range(ROUNDS):
-        print(f"\n--- Round {_round + 1} ---")
+    transcript: list[tuple[str, str]] = []
+
+    for round_num in range(rounds):
+        print_thinking(PROPOSER)
         proposer_response = call_agent(
             proposer_messages + format_critic_arguments(critic_response),
             PROPOSER_SYSTEM_PROMPT,
         )
-        print("Proposer's response:", proposer_response)
+        print_speaker_response(PROPOSER, proposer_response)
         proposer_messages.append({"role": "assistant", "content": proposer_response})
+        transcript.append(("Proposer", proposer_response))
 
+        print_thinking(CRITIC)
         critic_response = call_agent(
             critic_messages + format_proposer_arguments(proposer_response),
             CRITIC_SYSTEM_PROMPT,
         )
-        print("Critic's response:", critic_response)
+        print_speaker_response(CRITIC, critic_response)
         critic_messages.append({"role": "assistant", "content": critic_response})
-        print("Round completed.")
+        transcript.append(("Critic", critic_response))
 
-    print("\nDebate completed. Finalizing judge's verdict...")
+    print_thinking(JUDGE)
     judge_response = call_agent(
         format_judge_arguments(proposer_messages, critic_messages),
         JUDGE_SYSTEM_PROMPT,
     )
-    print("Judge's verdict:", judge_response)
+    print_verdict(JUDGE, judge_response)
 
     return proposer_response, critic_response, judge_response
 
 
 if __name__ == "__main__":
-    claim = input("Enter a factual claim to debate: ")
-    print("The claim to debate is:", claim)
-    print("Running debate...")
-    proposer_response, critic_response, judge_response = run_debate(
-        f"{claim}"
-    )  # Add a period at the end of the claim)
-
-    print("\nProposer's final response:\n", proposer_response)
-    print("\nCritic's final response:\n", critic_response)
-    print("\nJudge's final verdict:\n", judge_response)
+    claim = prompt_claim()
+    run_debate(claim)
