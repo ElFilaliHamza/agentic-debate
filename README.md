@@ -1,6 +1,6 @@
 # Agent Harness Learning Project
 
-A simple implementation of an AI agent harness using the Ollama API and function calling capabilities. This project demonstrates how to create an agent that can use external tools (like a calculator) to answer user queries.
+Multi-mode AI debate agents using the Ollama API. Two debate formats are available — a proposer/critic debate for fact-checking claims, and a public debate between two speakers with a judge's verdict.
 
 ## Installation
 
@@ -17,21 +17,29 @@ A simple implementation of an AI agent harness using the Ollama API and function
 
 3. Create a `.env` file in the project root with your Ollama configuration:
    ```env
-   OLLAMA_HOST=http://localhost:11434
+   OLLAMA_API_URL=http://localhost:11434
    OLLAMA_API_KEY=your_api_key_here  # Optional if your Ollama instance doesn't require auth
    ```
 
 ## Usage
 
-Run the agent from the command line:
+### Proposer/Critic Debate
+
+Enter a factual claim and watch a Proposer and Critic argue it out, with a Judge delivering a final verdict:
 
 ```bash
-uv run main.py
+uv run python -m normal_critic_debate.debate
 ```
 
-You'll be prompted to enter a question. For example:
-- "What is the square root of 144?"
-- "Calculate 25 * 4 + 10"
-- "What is (15 + 5) * 3?"
+### Public Debate
 
-The agent will use its calculator tool when needed to compute mathematical expressions.
+Two speakers debate a motion for/against across multiple rounds, then a Judge picks a winner:
+
+```bash
+uv run python -m public_debate.public_debate
+```
+
+Configurable via environment variables:
+- `DEBATE_ROUNDS` — number of rounds (default: 3)
+- `DEBATE_MAX_CHARS` — max response length per speaker (default: 300)
+- `TYPING_DELAY` — delay between characters for streaming output (default: 0.02)
