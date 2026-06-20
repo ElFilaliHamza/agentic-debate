@@ -3,8 +3,8 @@ import os
 import sys
 import time
 from ollama import Client
-from helpers import enforce_limit, format_opponent_argument
-from public_debate_system_prompt import (
+from public_debate.helpers import enforce_limit, format_opponent_argument
+from public_debate.public_debate_system_prompt import (
     SPEAKER_A_SYSTEM_PROMPT,
     SPEAKER_B_SYSTEM_PROMPT,
     JUDGE_SYSTEM_PROMPT,

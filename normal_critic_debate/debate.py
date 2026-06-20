@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 from ollama import Client
-from debate_system_prompts import (
+from normal_critic_debate.debate_system_prompts import (
     PROPOSER_SYSTEM_PROMPT,
     CRITIC_SYSTEM_PROMPT,
     JUDGE_SYSTEM_PROMPT,
@@ -12,7 +12,7 @@ MODEL = "glm-5.1:cloud"
 
 
 client = Client(
-    host=os.getenv("OLLAMA_HOST"),
+    host=os.getenv("OLLAMA_API_URL", "http://localhost:11434"),
     headers=(
         {"Authorization": f"Bearer {os.getenv('OLLAMA_API_KEY', '')}"}
         if os.getenv("OLLAMA_API_KEY")
