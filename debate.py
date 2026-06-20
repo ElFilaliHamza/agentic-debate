@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 from ollama import Client
-from system_prompts import (
+from debate_system_prompts import (
     PROPOSER_SYSTEM_PROMPT,
     CRITIC_SYSTEM_PROMPT,
     JUDGE_SYSTEM_PROMPT,
