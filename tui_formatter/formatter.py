@@ -7,8 +7,7 @@ import time
 
 from rich.panel import Panel
 from tui_formatter.console import console
-from tui_formatter.roles import Role
-
+from tui_formatter.roles import Role, TOOL_ICONS
 
 TYPING_DELAY = float(os.getenv("TYPING_DELAY", "0.02"))
 
@@ -108,3 +107,22 @@ def print_verdict(role: Role, text: str) -> None:
         )
     )
     console.print()
+
+
+def print_tool_result(tool_name: str, result: str) -> None:
+    """Display a tool result as a distinct inline block."""
+    icon = TOOL_ICONS.get(tool_name, "🔧")
+    label = tool_name.replace("_", " ").title()
+    console.print()
+    console.print(f"  {icon} {label}:", style="tool_result")
+    console.print(f"    {result}", style="tool_result.text")
+    console.print()
+
+
+def print_tool_assignment(role, tools: list) -> None:
+    """Display which tools a speaker has been assigned."""
+    tool_names = [f"{TOOL_ICONS.get(t.name, '🔧')} {t.name}" for t in tools]
+    console.print(
+        f"  {role.icon} {role.label} tools: {', '.join(tool_names)}",
+        style="system",
+    )

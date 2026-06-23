@@ -62,3 +62,10 @@ ROLES: dict[str, Role] = {
     "speaker_b": SPEAKER_B,
     "judge": JUDGE,
 }
+
+TOOL_ICONS: dict[str, str] = {
+    "search": "🔍",
+    "detect_fallacy": "🎯",
+    "quote": "📜",
+    "poll": "📊",
+}

@@ -22,6 +22,9 @@ DEBATE_THEME = Theme(
         "judge.text": "gold1",
         "system": "dim",
         "claim": "bold white",
+        "tool_result": "bold yellow",
+        "tool_result.title": "yellow",
+        "tool_result.text": "yellow",
     }
 )
 
