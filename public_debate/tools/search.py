@@ -1,5 +1,5 @@
 from public_debate.tools.base import BaseTool
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 
 
 class SearchTool(BaseTool):
