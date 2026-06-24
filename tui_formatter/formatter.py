@@ -126,3 +126,11 @@ def print_tool_assignment(role, tools: list) -> None:
         f"  {role.icon} {role.label} tools: {', '.join(tool_names)}",
         style="system",
     )
+
+
+def print_moderator(text: str) -> None:
+    """Display the moderator's commentary with the moderator role style."""
+    console.print()
+    console.print("🎙️ Moderator:", style="moderator")
+    console.print(f"  {text}", style="moderator.text")
+    console.print()

@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "ddgs>=9.14.4",
+    "edge-tts>=7.2.8",
     "ollama>=0.6.2",
+    "pygame>=2.6.1",
     "python-dotenv>=1.2.2",
     "rich>=13.0.0",
 ]

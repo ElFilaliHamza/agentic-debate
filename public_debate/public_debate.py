@@ -1,3 +1,4 @@
+import argparse
 from dotenv import load_dotenv
 import os
 from ollama import Client
@@ -9,8 +10,12 @@ from public_debate.public_debate_system_prompt import (
 )
 from public_debate.tools import BaseTool
 from public_debate.tools.registry import ToolRegistry
+from moderator.moderator import opening as moderator_opening, transition as moderator_transition, closing as moderator_closing
+from voice.voices import VoiceAssignment
+from voice.player import speak as voice_speak
 from tui_formatter.console import console
 from tui_formatter.formatter import (
+    print_moderator,
     print_speaker_label,
     print_thinking,
     print_tool_assignment,
@@ -18,7 +23,7 @@ from tui_formatter.formatter import (
     print_verdict,
     prompt_motion,
 )
-from tui_formatter.roles import JUDGE, SPEAKER_A, SPEAKER_B
+from tui_formatter.roles import JUDGE, MODERATOR, SPEAKER_A, SPEAKER_B
 
 load_dotenv()
 MODEL = "glm-5.1:cloud"
@@ -222,16 +227,23 @@ def run_debate(
     motion: str,
     max_rounds: int = ROUNDS,
     max_chars: int = MAX_CHARS,
+    voice_enabled: bool = True,
 ) -> list[tuple[str, str]]:
+    voices = VoiceAssignment()
     registry = ToolRegistry()
     tools_a, tools_b = registry.assign_random()
     schemas_a = registry.get_schemas(tools_a)
     schemas_b = registry.get_schemas(tools_b)
 
-    # Display tool assignments
     print_tool_assignment(SPEAKER_A, tools_a)
     print_tool_assignment(SPEAKER_B, tools_b)
     console.print()
+
+    opening_text = moderator_opening(client, MODEL, motion, format_type="public")
+    if opening_text:
+        print_moderator(opening_text)
+        if voice_enabled:
+            voice_speak(opening_text, voice=voices.moderator)
 
     speaker_a_msgs = [
         {
@@ -250,6 +262,15 @@ def run_debate(
     transcript: list[tuple[str, str]] = []
 
     for round_num in range(max_rounds):
+        if round_num > 0:
+            transition_text = moderator_transition(
+                client, MODEL, transcript, "Speaker A", round_num + 1, max_rounds
+            )
+            if transition_text:
+                print_moderator(transition_text)
+                if voice_enabled:
+                    voice_speak(transition_text, voice=voices.moderator)
+
         print_speaker_label(SPEAKER_A)
         a_response = stream_agent_with_tools(
             (
@@ -266,6 +287,16 @@ def run_debate(
         a_response = enforce_limit(a_response, max_chars)
         speaker_a_msgs.append({"role": "assistant", "content": a_response})
         transcript.append(("Speaker A", a_response))
+        if voice_enabled:
+            voice_speak(a_response, voice=voices.speaker_a)
+
+        transition_text = moderator_transition(
+            client, MODEL, transcript, "Speaker B", round_num + 1, max_rounds
+        )
+        if transition_text:
+            print_moderator(transition_text)
+            if voice_enabled:
+                voice_speak(transition_text, voice=voices.moderator)
 
         print_speaker_label(SPEAKER_B)
         b_response = stream_agent_with_tools(
@@ -283,8 +314,16 @@ def run_debate(
         b_response = enforce_limit(b_response, max_chars)
         speaker_b_msgs.append({"role": "assistant", "content": b_response})
         transcript.append(("Speaker B", b_response))
+        if voice_enabled:
+            voice_speak(b_response, voice=voices.speaker_b)
 
         last_b_response = b_response
+
+    closing_text = moderator_closing(client, MODEL, transcript, format_type="public")
+    if closing_text:
+        print_moderator(closing_text)
+        if voice_enabled:
+            voice_speak(closing_text, voice=voices.moderator)
 
     return transcript
 
@@ -293,7 +332,9 @@ def judge_debate(
     transcript: list[tuple[str, str]],
     motion: str,
     max_chars: int = MAX_CHARS,
+    voice_enabled: bool = True,
 ) -> str:
+    voices = VoiceAssignment()
     registry = ToolRegistry()
     judge_tools = registry.judge_tools()
     judge_schemas = registry.get_schemas(judge_tools)
@@ -318,11 +359,17 @@ def judge_debate(
     verdict = enforce_limit(verdict, max_chars)
 
     print_verdict(JUDGE, verdict)
+    if voice_enabled:
+        voice_speak(verdict, voice=voices.judge)
 
     return verdict
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Run a public debate")
+    parser.add_argument("--no-voice", action="store_true", help="Disable voice audio playback")
+    args = parser.parse_args()
+
     motion = prompt_motion()
-    transcript = run_debate(motion)
-    judge_debate(transcript, motion)
+    transcript = run_debate(motion, voice_enabled=not args.no_voice)
+    judge_debate(transcript, motion, voice_enabled=not args.no_voice)

@@ -12,10 +12,12 @@ from tui_formatter.formatter import (
     print_thinking,
     print_verdict,
     stream_text,
+    print_moderator,
 )
 from tui_formatter.roles import (
     CRITIC,
     JUDGE,
+    MODERATOR,
     PROPOSER,
     SPEAKER_A,
     SPEAKER_B,
@@ -35,8 +37,10 @@ __all__ = [
     "print_thinking",
     "print_verdict",
     "stream_text",
+    "print_moderator",
     "CRITIC",
     "JUDGE",
+    "MODERATOR",
     "PROPOSER",
     "SPEAKER_A",
     "SPEAKER_B",

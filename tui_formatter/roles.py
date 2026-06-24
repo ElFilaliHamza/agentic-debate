@@ -54,6 +54,14 @@ JUDGE = Role(
     text_style="judge.text",
 )
 
+MODERATOR = Role(
+    key="moderator",
+    label="Moderator",
+    icon="🎙️",
+    style="moderator",
+    text_style="moderator.text",
+)
+
 # Lookup by key for generic access
 ROLES: dict[str, Role] = {
     "proposer": PROPOSER,
@@ -61,6 +69,7 @@ ROLES: dict[str, Role] = {
     "speaker_a": SPEAKER_A,
     "speaker_b": SPEAKER_B,
     "judge": JUDGE,
+    "moderator": MODERATOR,
 }
 
 TOOL_ICONS: dict[str, str] = {
