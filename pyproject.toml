@@ -14,7 +14,15 @@ dependencies = [
     "sounddevice>=0.5.1",
     "python-dotenv>=1.2.2",
     "rich>=13.0.0",
+    "transformers>=5.12.1",
+    "torch>=2.12.1",
 ]
 
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = ["public_debate*", "moderator*", "tui_formatter*", "voice*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]

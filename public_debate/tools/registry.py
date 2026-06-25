@@ -4,6 +4,8 @@ from public_debate.tools import (
     FallacyDetectorTool,
     QuoteTool,
     PollTool,
+    SentimentTool,
+    JokeTool,
 )
 import random
 
@@ -16,7 +18,7 @@ class ToolRegistry:
         self._register_defaults()
 
     def _register_defaults(self) -> None:
-        for tool_cls in [SearchTool, FallacyDetectorTool, QuoteTool, PollTool]:
+        for tool_cls in [SearchTool, FallacyDetectorTool, QuoteTool, PollTool, SentimentTool, JokeTool]:
             instance = tool_cls()
             self._tools[instance.name] = instance
 

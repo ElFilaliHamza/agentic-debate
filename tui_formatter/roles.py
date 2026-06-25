@@ -77,4 +77,6 @@ TOOL_ICONS: dict[str, str] = {
     "detect_fallacy": "🎯",
     "quote": "📜",
     "poll": "📊",
+    "sentiment": "🎭",
+    "joke": "😄",
 }
