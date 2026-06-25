@@ -41,12 +41,14 @@ def opening(client: Client, model: str, motion: str, format_type: str = "public"
     if format_type == "proposer_critic":
         role_context = (
             f"The Proposer will argue for the claim, and the Critic will argue against it. "
-            f"Claim: {motion}"
+            f"Claim: {motion}. "
+            f"The Proposer speaks first. End by giving the Proposer the floor."
         )
     else:
         role_context = (
             f"{SPEAKER_A.label} will argue for the motion, and {SPEAKER_B.label} will argue against it. "
-            f"Motion: {motion}"
+            f"Motion: {motion}. "
+            f"{SPEAKER_A.label} speaks first. End by giving {SPEAKER_A.label} the floor."
         )
 
     messages = [{"role": "user", "content": role_context}]
@@ -92,7 +94,8 @@ def transition(
     prompt = (
         f"Round {round_num} of {total_rounds}. "
         f"Here is what has been said so far:\n{transcript_text}\n\n"
-        f"Now introduce {next_speaker}."
+        f"Now hand the floor to {next_speaker} by name. "
+        f"End your response by giving {next_speaker} the mic."
     )
 
     messages = [{"role": "user", "content": prompt}]

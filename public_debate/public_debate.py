@@ -248,13 +248,13 @@ def run_debate(
     speaker_a_msgs = [
         {
             "role": "user",
-            "content": f"You are starting a public debate. The motion is: {motion}",
+            "content": f"The moderator has just given you the floor. The motion is: {motion}. Open the debate.",
         }
     ]
     speaker_b_msgs = [
         {
             "role": "user",
-            "content": f"You are the second speaker in a public debate. The motion is: {motion}",
+            "content": f"The moderator has just turned to you. The motion is: {motion}. Respond to {SPEAKER_A.label}'s argument.",
         }
     ]
 
