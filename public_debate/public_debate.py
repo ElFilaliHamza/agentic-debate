@@ -1,4 +1,5 @@
 import argparse
+import logging
 from dotenv import load_dotenv
 import os
 from ollama import Client
@@ -11,8 +12,7 @@ from public_debate.public_debate_system_prompt import (
 from public_debate.tools import BaseTool
 from public_debate.tools.registry import ToolRegistry
 from moderator.moderator import opening as moderator_opening, transition as moderator_transition, closing as moderator_closing
-from voice.voices import VoiceAssignment
-from voice.player import speak as voice_speak
+from voice import speak
 from tui_formatter.console import console
 from tui_formatter.formatter import (
     print_moderator,
@@ -26,6 +26,7 @@ from tui_formatter.formatter import (
 from tui_formatter.roles import JUDGE, MODERATOR, SPEAKER_A, SPEAKER_B
 
 load_dotenv()
+logging.basicConfig(level=getattr(logging, os.getenv("LOG_LEVEL", "WARNING").upper(), logging.WARNING), format="%(name)s: %(message)s")
 MODEL = "glm-5.1:cloud"
 ROUNDS = int(os.getenv("DEBATE_ROUNDS", 3))
 MAX_CHARS = int(os.getenv("DEBATE_MAX_CHARS", 300))
@@ -229,7 +230,6 @@ def run_debate(
     max_chars: int = MAX_CHARS,
     voice_enabled: bool = True,
 ) -> list[tuple[str, str]]:
-    voices = VoiceAssignment()
     registry = ToolRegistry()
     tools_a, tools_b = registry.assign_random()
     schemas_a = registry.get_schemas(tools_a)
@@ -243,7 +243,7 @@ def run_debate(
     if opening_text:
         print_moderator(opening_text)
         if voice_enabled:
-            voice_speak(opening_text, voice=voices.moderator)
+            speak(opening_text, role="moderator")
 
     speaker_a_msgs = [
         {
@@ -264,17 +264,17 @@ def run_debate(
     for round_num in range(max_rounds):
         if round_num > 0:
             transition_text = moderator_transition(
-                client, MODEL, transcript, "Speaker A", round_num + 1, max_rounds
+                client, MODEL, transcript, SPEAKER_A.label, round_num + 1, max_rounds
             )
             if transition_text:
                 print_moderator(transition_text)
                 if voice_enabled:
-                    voice_speak(transition_text, voice=voices.moderator)
+                    speak(transition_text, role="moderator")
 
         print_speaker_label(SPEAKER_A)
         a_response = stream_agent_with_tools(
             (
-                speaker_a_msgs + format_opponent_argument("Speaker B", last_b_response)
+                speaker_a_msgs + format_opponent_argument(SPEAKER_B.label, last_b_response)
                 if round_num > 0
                 else speaker_a_msgs
             ),
@@ -286,22 +286,22 @@ def run_debate(
         )
         a_response = enforce_limit(a_response, max_chars)
         speaker_a_msgs.append({"role": "assistant", "content": a_response})
-        transcript.append(("Speaker A", a_response))
+        transcript.append((SPEAKER_A.label, a_response))
         if voice_enabled:
-            voice_speak(a_response, voice=voices.speaker_a)
+            speak(a_response, role="speaker_a")
 
         transition_text = moderator_transition(
-            client, MODEL, transcript, "Speaker B", round_num + 1, max_rounds
+            client, MODEL, transcript, SPEAKER_B.label, round_num + 1, max_rounds
         )
         if transition_text:
             print_moderator(transition_text)
             if voice_enabled:
-                voice_speak(transition_text, voice=voices.moderator)
+                speak(transition_text, role="moderator")
 
         print_speaker_label(SPEAKER_B)
         b_response = stream_agent_with_tools(
             (
-                speaker_b_msgs + format_opponent_argument("Speaker A", a_response)
+                speaker_b_msgs + format_opponent_argument(SPEAKER_A.label, a_response)
                 if round_num > 0
                 else speaker_b_msgs
             ),
@@ -313,9 +313,9 @@ def run_debate(
         )
         b_response = enforce_limit(b_response, max_chars)
         speaker_b_msgs.append({"role": "assistant", "content": b_response})
-        transcript.append(("Speaker B", b_response))
+        transcript.append((SPEAKER_B.label, b_response))
         if voice_enabled:
-            voice_speak(b_response, voice=voices.speaker_b)
+            speak(b_response, role="speaker_b")
 
         last_b_response = b_response
 
@@ -323,7 +323,7 @@ def run_debate(
     if closing_text:
         print_moderator(closing_text)
         if voice_enabled:
-            voice_speak(closing_text, voice=voices.moderator)
+            speak(closing_text, role="moderator")
 
     return transcript
 
@@ -334,7 +334,6 @@ def judge_debate(
     max_chars: int = MAX_CHARS,
     voice_enabled: bool = True,
 ) -> str:
-    voices = VoiceAssignment()
     registry = ToolRegistry()
     judge_tools = registry.judge_tools()
     judge_schemas = registry.get_schemas(judge_tools)
@@ -360,7 +359,7 @@ def judge_debate(
 
     print_verdict(JUDGE, verdict)
     if voice_enabled:
-        voice_speak(verdict, voice=voices.judge)
+        speak(verdict, role="judge")
 
     return verdict
 

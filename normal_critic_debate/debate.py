@@ -1,4 +1,5 @@
 import argparse
+import logging
 from dotenv import load_dotenv
 import os
 from ollama import Client
@@ -8,8 +9,7 @@ from normal_critic_debate.debate_system_prompts import (
     JUDGE_SYSTEM_PROMPT,
 )
 from moderator.moderator import opening as moderator_opening, transition as moderator_transition, closing as moderator_closing
-from voice.voices import VoiceAssignment
-from voice.player import speak as voice_speak
+from voice import speak
 from tui_formatter.formatter import (
     print_claim,
     print_moderator,
@@ -21,6 +21,7 @@ from tui_formatter.formatter import (
 from tui_formatter.roles import CRITIC, JUDGE, MODERATOR, PROPOSER
 
 load_dotenv()
+logging.basicConfig(level=getattr(logging, os.getenv("LOG_LEVEL", "WARNING").upper(), logging.WARNING), format="%(name)s: %(message)s")
 MODEL = "glm-5.1:cloud"
 DEFAULT_ROUNDS = 3
 
@@ -88,7 +89,6 @@ def format_judge_arguments(
 
 
 def run_debate(claim: str, rounds: int = DEFAULT_ROUNDS, voice_enabled: bool = True) -> tuple[str, str, str]:
-    voices = VoiceAssignment()
     proposer_messages = [{"role": "user", "content": claim}]
     critic_messages = []
     critic_response = ""
@@ -99,7 +99,7 @@ def run_debate(claim: str, rounds: int = DEFAULT_ROUNDS, voice_enabled: bool = T
     if opening_text:
         print_moderator(opening_text)
         if voice_enabled:
-            voice_speak(opening_text, voice=voices.moderator)
+            speak(opening_text, role="moderator")
 
     for round_num in range(rounds):
         if round_num > 0:
@@ -109,7 +109,7 @@ def run_debate(claim: str, rounds: int = DEFAULT_ROUNDS, voice_enabled: bool = T
             if transition_text:
                 print_moderator(transition_text)
                 if voice_enabled:
-                    voice_speak(transition_text, voice=voices.moderator)
+                    speak(transition_text, role="moderator")
 
         print_thinking(PROPOSER)
         proposer_response = call_agent(
@@ -120,7 +120,7 @@ def run_debate(claim: str, rounds: int = DEFAULT_ROUNDS, voice_enabled: bool = T
         proposer_messages.append({"role": "assistant", "content": proposer_response})
         transcript.append(("Proposer", proposer_response))
         if voice_enabled:
-            voice_speak(proposer_response, voice=voices.proposer)
+            speak(proposer_response, role="proposer")
 
         transition_text = moderator_transition(
             client, MODEL, transcript, "Critic", round_num + 1, rounds
@@ -128,7 +128,7 @@ def run_debate(claim: str, rounds: int = DEFAULT_ROUNDS, voice_enabled: bool = T
         if transition_text:
             print_moderator(transition_text)
             if voice_enabled:
-                voice_speak(transition_text, voice=voices.moderator)
+                speak(transition_text, role="moderator")
 
         print_thinking(CRITIC)
         critic_response = call_agent(
@@ -139,13 +139,13 @@ def run_debate(claim: str, rounds: int = DEFAULT_ROUNDS, voice_enabled: bool = T
         critic_messages.append({"role": "assistant", "content": critic_response})
         transcript.append(("Critic", critic_response))
         if voice_enabled:
-            voice_speak(critic_response, voice=voices.critic)
+            speak(critic_response, role="critic")
 
     closing_text = moderator_closing(client, MODEL, transcript, format_type="proposer_critic")
     if closing_text:
         print_moderator(closing_text)
         if voice_enabled:
-            voice_speak(closing_text, voice=voices.moderator)
+            speak(closing_text, role="moderator")
 
     print_thinking(JUDGE)
     judge_response = call_agent(
@@ -154,7 +154,7 @@ def run_debate(claim: str, rounds: int = DEFAULT_ROUNDS, voice_enabled: bool = T
     )
     print_verdict(JUDGE, judge_response)
     if voice_enabled:
-        voice_speak(judge_response, voice=voices.judge)
+        speak(judge_response, role="judge")
 
     return proposer_response, critic_response, judge_response
 
