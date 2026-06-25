@@ -9,7 +9,9 @@ dependencies = [
     "edge-tts>=7.2.8",
     "fish-audio-sdk>=1.0.0",
     "ollama>=0.6.2",
-    "pygame>=2.6.1",
+    "miniaudio>=1.59",
+    "numpy>=2.0.0",
+    "sounddevice>=0.5.1",
     "python-dotenv>=1.2.2",
     "rich>=13.0.0",
 ]

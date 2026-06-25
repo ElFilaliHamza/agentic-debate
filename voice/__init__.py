@@ -6,7 +6,7 @@ import asyncio
 import logging
 from pathlib import Path
 
-from voice.player import cleanup_audio, play_audio
+from voice.player import cleanup_audio, play_audio, play_audio_files
 from voice.provider import TTSProvider, get_provider
 
 logger = logging.getLogger(__name__)
@@ -48,8 +48,8 @@ def speak(text: str, role: str) -> None:
         from tui_formatter.console import console
         with console.status(f"  {icon} {label} — Generating speech...", spinner="dots"):
             audio_paths = asyncio.run(provider.generate_audio(text, voice))
+        play_audio_files(audio_paths)
         for audio_path in audio_paths:
-            play_audio(audio_path)
             cleanup_audio(audio_path)
     except Exception as e:
         logger.warning("Voice speak failed: %s. Continuing without audio.", e)

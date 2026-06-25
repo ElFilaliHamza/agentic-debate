@@ -79,3 +79,4 @@ cython_debug/
 
 docs
 temp_*
+debug_chunk_*.wav

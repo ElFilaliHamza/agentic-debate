@@ -17,16 +17,15 @@ class TTSProvider(ABC):
         voice: str,
         output_path: Path | None = None,
     ) -> list[Path]:
-        """Generate audio files from text.
+        """Generate audio from text.
 
         Args:
             text: The text to synthesize.
             voice: Provider-specific voice identifier.
-            output_path: Where to save the primary audio file. If None, creates a temp file.
+            output_path: Where to save the audio file. If None, creates a temp file.
 
         Returns:
             List of Paths to generated audio files, in playback order.
-            For single-chunk generation, returns a list with one element.
         """
         ...
 
