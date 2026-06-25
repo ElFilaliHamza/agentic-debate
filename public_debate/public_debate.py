@@ -12,7 +12,8 @@ from public_debate.public_debate_system_prompt import (
 from public_debate.tools import BaseTool
 from public_debate.tools.registry import ToolRegistry
 from moderator.moderator import opening as moderator_opening, transition as moderator_transition, closing as moderator_closing
-from voice import speak
+from voice import speak, set_save_dir
+from voice.slug import create_debate_dir
 from tui_formatter.console import console
 from tui_formatter.formatter import (
     print_moderator,
@@ -239,11 +240,14 @@ def run_debate(
     print_tool_assignment(SPEAKER_B, tools_b)
     console.print()
 
+    if voice_enabled:
+        set_save_dir(create_debate_dir(motion))
+
     opening_text = moderator_opening(client, MODEL, motion, format_type="public")
     if opening_text:
         print_moderator(opening_text)
         if voice_enabled:
-            speak(opening_text, role="moderator")
+            speak(opening_text, role="moderator", label="opening")
 
     speaker_a_msgs = [
         {
@@ -269,7 +273,7 @@ def run_debate(
             if transition_text:
                 print_moderator(transition_text)
                 if voice_enabled:
-                    speak(transition_text, role="moderator")
+                    speak(transition_text, role="moderator", label=f"transition_round_{round_num + 1}")
 
         print_speaker_label(SPEAKER_A)
         a_response = stream_agent_with_tools(
@@ -288,7 +292,7 @@ def run_debate(
         speaker_a_msgs.append({"role": "assistant", "content": a_response})
         transcript.append((SPEAKER_A.label, a_response))
         if voice_enabled:
-            speak(a_response, role="speaker_a")
+            speak(a_response, role="speaker_a", label=f"round_{round_num + 1}")
 
         transition_text = moderator_transition(
             client, MODEL, transcript, SPEAKER_B.label, round_num + 1, max_rounds
@@ -296,7 +300,7 @@ def run_debate(
         if transition_text:
             print_moderator(transition_text)
             if voice_enabled:
-                speak(transition_text, role="moderator")
+                speak(transition_text, role="moderator", label=f"transition_round_{round_num + 1}_b")
 
         print_speaker_label(SPEAKER_B)
         b_response = stream_agent_with_tools(
@@ -315,7 +319,7 @@ def run_debate(
         speaker_b_msgs.append({"role": "assistant", "content": b_response})
         transcript.append((SPEAKER_B.label, b_response))
         if voice_enabled:
-            speak(b_response, role="speaker_b")
+            speak(b_response, role="speaker_b", label=f"round_{round_num + 1}")
 
         last_b_response = b_response
 
@@ -323,7 +327,7 @@ def run_debate(
     if closing_text:
         print_moderator(closing_text)
         if voice_enabled:
-            speak(closing_text, role="moderator")
+            speak(closing_text, role="moderator", label="closing")
 
     return transcript
 
@@ -337,6 +341,9 @@ def judge_debate(
     registry = ToolRegistry()
     judge_tools = registry.judge_tools()
     judge_schemas = registry.get_schemas(judge_tools)
+
+    if voice_enabled:
+        set_save_dir(create_debate_dir(motion))
 
     debate_text = "\n".join(f"{speaker}: {content}" for speaker, content in transcript)
 
@@ -359,7 +366,7 @@ def judge_debate(
 
     print_verdict(JUDGE, verdict)
     if voice_enabled:
-        speak(verdict, role="judge")
+        speak(verdict, role="judge", label="verdict")
 
     return verdict
 

@@ -25,4 +25,5 @@ include = ["public_debate*", "moderator*", "tui_formatter*", "voice*"]
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "ruff>=0.15.20",
 ]
