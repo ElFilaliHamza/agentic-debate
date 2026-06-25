@@ -35,11 +35,11 @@ class PollTool(BaseTool):
         "The audience leans forward in their seats.",
     ]
 
-    POLL_SYSTEM_PROMPT = (
+    POLL_SYSTEM_PROMPT_TEMPLATE = (
         "You are scoring which side of a debate is more convincing "
         "on a specific point. Given a question, respond with ONLY "
-        "a number between 0-100 where 100 means Speaker A is "
-        "completely convincing and 0 means Speaker B is completely "
+        "a number between 0-100 where 100 means {speaker_a_label} is "
+        "completely convincing and 0 means {speaker_b_label} is completely "
         "convincing. Respond with just the number, nothing else."
     )
 
@@ -53,7 +53,10 @@ class PollTool(BaseTool):
             response = client.chat(
                 model=self._model,
                 messages=[
-                    {"role": "system", "content": self.POLL_SYSTEM_PROMPT},
+                    {"role": "system", "content": self.POLL_SYSTEM_PROMPT_TEMPLATE.format(
+                        speaker_a_label=SPEAKER_A.label,
+                        speaker_b_label=SPEAKER_B.label,
+                    )},
                     {"role": "user", "content": question},
                 ],
             )

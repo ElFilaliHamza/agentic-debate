@@ -278,7 +278,7 @@ def run_debate(
                 if round_num > 0
                 else speaker_a_msgs
             ),
-            SPEAKER_A_SYSTEM_PROMPT.format(motion=motion, MAX_CHARS=max_chars),
+            SPEAKER_A_SYSTEM_PROMPT.format(motion=motion, MAX_CHARS=max_chars, speaker_a_label=SPEAKER_A.label, speaker_b_label=SPEAKER_B.label),
             tools=tools_a,
             tool_schemas=schemas_a,
             role_style=SPEAKER_A.text_style,
@@ -305,7 +305,7 @@ def run_debate(
                 if round_num > 0
                 else speaker_b_msgs
             ),
-            SPEAKER_B_SYSTEM_PROMPT.format(motion=motion, MAX_CHARS=max_chars),
+            SPEAKER_B_SYSTEM_PROMPT.format(motion=motion, MAX_CHARS=max_chars, speaker_a_label=SPEAKER_A.label, speaker_b_label=SPEAKER_B.label),
             tools=tools_b,
             tool_schemas=schemas_b,
             role_style=SPEAKER_B.text_style,
@@ -350,7 +350,7 @@ def judge_debate(
     print_thinking(JUDGE)
     verdict = call_agent(
         judge_input,
-        JUDGE_SYSTEM_PROMPT.format(motion=motion, MAX_CHARS=max_chars),
+        JUDGE_SYSTEM_PROMPT.format(motion=motion, MAX_CHARS=max_chars, speaker_a_label=SPEAKER_A.label, speaker_b_label=SPEAKER_B.label),
         tools=judge_tools,
         tool_schemas=judge_schemas,
         registry=registry,

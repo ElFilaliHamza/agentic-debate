@@ -11,6 +11,8 @@ from moderator.moderator_prompt import (
     MODERATOR_TRANSITION_PROMPT,
 )
 
+from tui_formatter.roles import SPEAKER_A, SPEAKER_B
+
 if TYPE_CHECKING:
     from ollama import Client
 
@@ -43,7 +45,7 @@ def opening(client: Client, model: str, motion: str, format_type: str = "public"
         )
     else:
         role_context = (
-            f"Speaker A will argue for the motion, and Speaker B will argue against it. "
+            f"{SPEAKER_A.label} will argue for the motion, and {SPEAKER_B.label} will argue against it. "
             f"Motion: {motion}"
         )
 

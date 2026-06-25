@@ -32,7 +32,7 @@ CRITIC = Role(
 
 SPEAKER_A = Role(
     key="speaker_a",
-    label="Speaker A",
+    label="Ahmed",
     icon="🛡️",
     style="speaker_a",
     text_style="speaker_a.text",
@@ -40,7 +40,7 @@ SPEAKER_A = Role(
 
 SPEAKER_B = Role(
     key="speaker_b",
-    label="Speaker B",
+    label="Khaled",
     icon="⚔️",
     style="speaker_b",
     text_style="speaker_b.text",
