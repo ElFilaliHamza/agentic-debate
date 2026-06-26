@@ -82,7 +82,7 @@ def speak(text: str, role: str, label: str = "") -> None:
             for audio_path in audio_paths:
                 cleanup_audio(audio_path)
         else:
-            logger.info("Audio saved: %s", output_path)
+            logger.info("Audio saved: %s", ", ".join(str(p) for p in audio_paths))
     except Exception as e:
         logger.warning("Voice speak failed: %s. Continuing without audio.", e)
 

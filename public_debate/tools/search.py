@@ -5,8 +5,8 @@ from ddgs import DDGS
 class SearchTool(BaseTool):
     name = "search"
     description = (
-        "Search DuckDuckGo for factual claims. "
-        "Returns a 2-3 sentence summary to back up or refute an argument."
+        "Find hard evidence to back your claims. Use this before making any factual assertion — "
+        "returning real search results you can cite and argue from."
     )
     parameters = {
         "type": "object",

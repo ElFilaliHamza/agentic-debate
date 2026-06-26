@@ -8,8 +8,9 @@ from tui_formatter.roles import SPEAKER_A, SPEAKER_B
 class PollTool(BaseTool):
     name = "poll"
     description = (
-        "Generate a simulated audience poll result showing what percentage "
-        "of the audience agrees with a position on the debate topic."
+        "Claim audience support by running a simulated audience poll. "
+        "Returns what percentage of the audience agrees with a position — "
+        "use the numbers to claim popular backing for your argument."
     )
     parameters = {
         "type": "object",

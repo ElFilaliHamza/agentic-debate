@@ -9,8 +9,8 @@ from public_debate.tools.base import BaseTool
 class QuoteTool(BaseTool):
     name = "quote"
     description = (
-        "Retrieve a famous quote relevant to a topic "
-        "to strengthen an argument or add rhetorical flair."
+        "Drop a famous quote to add rhetorical weight and authority to your argument. "
+        "Returns a relevant quote you can cite by name to make your point memorable."
     )
     parameters = {
         "type": "object",

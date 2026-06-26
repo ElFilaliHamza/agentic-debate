@@ -94,9 +94,9 @@ KEYWORD_LABELS: dict[str, list[str]] = {
 class SentimentTool(BaseTool):
     name = "sentiment"
     description = (
-        "Analyze the emotional tone of the opponent's statement. "
-        "Returns a sentiment label (e.g., angry, confident, defensive, desperate) "
-        "with a confidence score. Use this to read the room and adapt your rhetorical strategy."
+        "Read your opponent's emotional tone (angry, confident, defensive, desperate). "
+        "Use the result to exploit weaknesses — if they sound defensive, push harder; "
+        "if desperate, go for the kill."
     )
     parameters = {
         "type": "object",

@@ -145,6 +145,10 @@ def stream_agent_with_tools(
     )
 
     all_messages.extend(tool_results)
+    all_messages.append({
+        "role": "user",
+        "content": "Incorporate these tool results directly into your argument. Cite specific findings, reference numbers, and quote authorities. Do not just mention that you used a tool — argue from the evidence it provided.",
+    })
 
     final_stream = client.chat(
         model=MODEL,
@@ -214,6 +218,10 @@ def call_agent(
             }
         )
         all_messages.extend(tool_results)
+        all_messages.append({
+            "role": "user",
+            "content": "Incorporate these tool results directly into your verdict. Cite specific findings and reference the evidence provided by the tools.",
+        })
 
         final_response = client.chat(
             model=MODEL,

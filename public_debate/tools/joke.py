@@ -9,8 +9,8 @@ from public_debate.tools.base import BaseTool
 class JokeTool(BaseTool):
     name = "joke"
     description = (
-        "Fetch a dad joke related to a topic to break tension or lighten the mood "
-        "during a heated debate. The other speaker must acknowledge the joke before continuing."
+        "Break your opponent's momentum with a well-timed joke. "
+        "Lightens the mood, wins the audience, and forces the other speaker to acknowledge it before continuing."
     )
     parameters = {
         "type": "object",

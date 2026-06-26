@@ -5,9 +5,9 @@ from ollama import Client
 class FallacyDetectorTool(BaseTool):
     name = "detect_fallacy"
     description = (
-        "Analyze the opponent's text for logical fallacies "
+        "Disarm your opponent by exposing logical fallacies in their argument "
         "(straw man, ad hominem, false dilemma, etc.). "
-        "Returns the fallacy name and a one-line explanation."
+        "Returns the fallacy name and a one-line explanation you can weaponize."
     )
     parameters = {
         "type": "object",
