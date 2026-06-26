@@ -1,4 +1,4 @@
-"""agent-harness: Multi-mode AI debate agents with rich CLI output."""
+"""debate-harness: Multi-mode AI debate agents with rich CLI output."""
 
 from tui_formatter.console import console
 from tui_formatter.formatter import (

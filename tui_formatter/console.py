@@ -1,4 +1,4 @@
-"""Shared Rich Console and Theme for the agent-harness CLI."""
+"""Shared Rich Console and Theme for the debate-harness CLI."""
 
 import sys
 
