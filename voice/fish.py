@@ -28,6 +28,26 @@ FISH_VOICE_ENV_KEYS: dict[str, str] = {
 # chars to stay well within that limit while producing the fewest chunks possible.
 MAX_CHUNK_LENGTH = 300
 
+# Minimum expected speaking rate in seconds per character.
+# Fish Audio typically produces ~0.06 s/char.  If audio comes back at less
+# than half that rate (e.g. 0.02 s/char), the generation was truncated and
+# we retry.
+MIN_SECS_PER_CHAR = 0.025
+
+# Maximum number of retry attempts for truncated audio.
+MAX_RETRIES = 3
+
+
+def _get_audio_duration(path: Path) -> float:
+    """Return the duration of an audio file in seconds."""
+    decoded = miniaudio.decode_file(
+        str(path),
+        nchannels=1,
+        sample_rate=44100,
+        output_format=miniaudio.SampleFormat.SIGNED16,
+    )
+    return len(decoded.samples) / decoded.sample_rate
+
 
 def _split_text(text: str, max_length: int = MAX_CHUNK_LENGTH) -> list[str]:
     """Split text into chunks that respect paragraph and sentence boundaries.
@@ -143,6 +163,11 @@ class FishAudioStrategy(TTSProvider):
     ) -> Path:
         """Generate audio for a single text chunk using Fish Audio TTS.
 
+        After generation, verifies that the audio duration is reasonable
+        for the text length.  If Fish Audio returns truncated audio
+        (e.g. 2 seconds for 200 chars), the call is retried up to
+        ``MAX_RETRIES`` times.
+
         Args:
             text: The text chunk to synthesize.
             voice: Fish Audio reference_id (voice model ID).
@@ -153,40 +178,70 @@ class FishAudioStrategy(TTSProvider):
             Path to the generated audio file.
         """
         from fishaudio import AsyncFishAudio
-        from fishaudio.types import TTSConfig
 
-        client = AsyncFishAudio(api_key=self._api_key)
-        try:
-            audio = await client.tts.convert(
-                text=text,
-                reference_id=voice,
-                config=TTSConfig(
-                    chunk_length=300,
-                    max_new_tokens=4096,
-                    latency="normal",
+        for attempt in range(1, MAX_RETRIES + 1):
+            client = AsyncFishAudio(api_key=self._api_key)
+            try:
+                audio = await client.tts.convert(
+                    text=text,
+                    reference_id=voice,
                     format="wav",
-                    sample_rate=44100,
-                ),
-                model=model,
-            )
-        except Exception:
-            logger.exception(
-                "Fish TTS: API call failed for role='%s', text_len=%d",
-                voice,
+                    latency="normal",
+                    model=model,
+                )
+            except Exception:
+                logger.exception(
+                    "Fish TTS: API call failed for role='%s', text_len=%d",
+                    voice,
+                    len(text),
+                )
+                raise
+            finally:
+                await client.close()
+
+            with open(output_path, "wb") as f:
+                f.write(audio)
+
+            # Verify audio duration is reasonable for the text length.
+            try:
+                duration = _get_audio_duration(output_path)
+            except Exception:
+                duration = 0.0
+
+            secs_per_char = duration / len(text) if text else 0
+
+            if secs_per_char >= MIN_SECS_PER_CHAR:
+                # Audio looks good — duration matches text length.
+                logger.info(
+                    "Fish TTS: chunk completed — %d chars -> %d bytes, "
+                    "%.2fs (%.4f s/char), saved to %s",
+                    len(text),
+                    len(audio),
+                    duration,
+                    secs_per_char,
+                    output_path.name,
+                )
+                return output_path
+
+            # Audio was truncated — retry.
+            logger.warning(
+                "Fish TTS: truncated audio detected — %d chars produced %.2fs "
+                "(%.4f s/char, minimum %.4f). Attempt %d/%d, retrying...",
                 len(text),
+                duration,
+                secs_per_char,
+                MIN_SECS_PER_CHAR,
+                attempt,
+                MAX_RETRIES,
             )
-            raise
-        finally:
-            await client.close()
 
-        with open(output_path, "wb") as f:
-            f.write(audio)
-
-        logger.info(
-            "Fish TTS: chunk completed — %d chars -> %d bytes, saved to %s",
+        # All retries exhausted — return what we have and warn.
+        logger.warning(
+            "Fish TTS: %d retries exhausted for role='%s', text_len=%d. "
+            "Audio may be truncated.",
+            MAX_RETRIES,
+            voice,
             len(text),
-            len(audio),
-            output_path.name,
         )
         return output_path
 
@@ -291,13 +346,7 @@ class FishAudioStrategy(TTSProvider):
         for p in paths:
             try:
                 total_bytes += p.stat().st_size
-                decoded = miniaudio.decode_file(
-                    str(p),
-                    nchannels=1,
-                    sample_rate=44100,
-                    output_format=miniaudio.SampleFormat.SIGNED16,
-                )
-                total_duration += len(decoded.samples) / decoded.sample_rate
+                total_duration += _get_audio_duration(p)
             except Exception:
                 pass
 
