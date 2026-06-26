@@ -54,12 +54,12 @@ JUDGE = Role(
     text_style="judge.text",
 )
 
-MODERATOR = Role(
-    key="moderator",
-    label="Moderator",
+HOST = Role(
+    key="host",
+    label="Host",
     icon="🎙️",
-    style="moderator",
-    text_style="moderator.text",
+    style="host",
+    text_style="host.text",
 )
 
 # Lookup by key for generic access
@@ -69,7 +69,7 @@ ROLES: dict[str, Role] = {
     "speaker_a": SPEAKER_A,
     "speaker_b": SPEAKER_B,
     "judge": JUDGE,
-    "moderator": MODERATOR,
+    "host": HOST,
 }
 
 TOOL_ICONS: dict[str, str] = {

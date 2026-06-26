@@ -34,7 +34,7 @@ class TTSProvider(ABC):
         """Return the voice identifier for a given role.
 
         Args:
-            role: One of 'moderator', 'proposer', 'critic',
+            role: One of 'host', 'proposer', 'critic',
                   'speaker_a', 'speaker_b', 'judge'.
 
         Returns:

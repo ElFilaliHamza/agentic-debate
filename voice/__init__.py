@@ -12,7 +12,7 @@ from voice.provider import TTSProvider, get_provider
 logger = logging.getLogger(__name__)
 
 _ROLE_ICONS: dict[str, str] = {
-    "moderator": "🎙️",
+    "host": "🎙️",
     "proposer": "🛡️",
     "critic": "⚔️",
     "speaker_a": "🛡️",
@@ -57,7 +57,7 @@ def speak(text: str, role: str, label: str = "") -> None:
 
     Args:
         text: The text to synthesize.
-        role: Role key ('moderator', 'proposer', 'critic',
+        role: Role key ('host', 'proposer', 'critic',
               'speaker_a', 'speaker_b', 'judge').
         label: Descriptive label for the audio file (e.g. "round_1",
                "opening"). Used to construct the filename when saving.
@@ -77,7 +77,8 @@ def speak(text: str, role: str, label: str = "") -> None:
         from tui_formatter.console import console
         with console.status(f"  {icon} {display_label} — Generating speech...", spinner="dots"):
             audio_paths = asyncio.run(provider.generate_audio(text, voice, output_path=output_path))
-        play_audio_files(audio_paths)
+        with console.status(f"  {icon} {display_label} — Speaking...", spinner="dots"):
+            play_audio_files(audio_paths)
         if _save_dir is None:
             for audio_path in audio_paths:
                 cleanup_audio(audio_path)

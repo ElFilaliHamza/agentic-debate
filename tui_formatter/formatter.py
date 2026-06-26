@@ -128,9 +128,9 @@ def print_tool_assignment(role, tools: list) -> None:
     )
 
 
-def print_moderator(text: str) -> None:
-    """Display the moderator's commentary with the moderator role style."""
+def print_host(text: str) -> None:
+    """Display the host's commentary with the host role style."""
     console.print()
-    console.print("🎙️ Moderator:", style="moderator")
-    console.print(f"  {text}", style="moderator.text")
+    console.print("🎙️ Host:", style="host")
+    console.print(f"  {text}", style="host.text")
     console.print()

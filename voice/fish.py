@@ -15,7 +15,7 @@ from voice.provider import TTSProvider
 logger = logging.getLogger(__name__)
 
 FISH_VOICE_ENV_KEYS: dict[str, str] = {
-    "moderator": "FISH_VOICE_MODERATOR",
+    "host": "FISH_VOICE_HOST",
     "proposer": "FISH_VOICE_PROPOSER",
     "critic": "FISH_VOICE_CRITIC",
     "speaker_a": "FISH_VOICE_SPEAKER_A",

@@ -62,7 +62,7 @@ def play_audio_files(file_paths: list[Path]) -> None:
         combined = np.concatenate(all_frames, axis=0)
         duration = combined.shape[0] / 44100
         logger.info("Player: playing %d files as one stream, total duration=%.2fs",
-                     len(file_paths), duration)
+                      len(file_paths), duration)
 
         _play_frames(combined)
         logger.info("Player: playback finished")

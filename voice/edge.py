@@ -14,7 +14,7 @@ from voice.provider import TTSProvider
 
 MAX_TTS_LENGTH = 5000
 
-MODERATOR_VOICES = ["en-US-EricNeural", "en-US-GuyNeural", "en-US-ChristopherNeural"]
+HOST_VOICES = ["en-US-EricNeural", "en-US-GuyNeural", "en-US-ChristopherNeural"]
 PROPOSER_VOICES = ["en-US-GuyNeural", "en-US-BrianNeural", "en-US-JennyNeural"]
 CRITIC_VOICES = ["en-US-AriaNeural", "en-US-JennyNeural", "en-US-MichelleNeural"]
 SPEAKER_A_VOICES = ["en-US-GuyNeural", "en-US-BrianNeural", "en-US-ChristopherNeural"]
@@ -22,7 +22,7 @@ SPEAKER_B_VOICES = ["en-US-AriaNeural", "en-US-JennyNeural", "en-US-MichelleNeur
 JUDGE_VOICES = ["en-US-ChristopherNeural", "en-US-EricNeural", "en-US-GuyNeural"]
 
 VOICE_POOLS: dict[str, list[str]] = {
-    "moderator": MODERATOR_VOICES,
+    "host": HOST_VOICES,
     "proposer": PROPOSER_VOICES,
     "critic": CRITIC_VOICES,
     "speaker_a": SPEAKER_A_VOICES,

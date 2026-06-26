@@ -11,20 +11,19 @@ from public_debate.public_debate_system_prompt import (
 )
 from public_debate.tools import BaseTool
 from public_debate.tools.registry import ToolRegistry
-from moderator.moderator import opening as moderator_opening, transition as moderator_transition, closing as moderator_closing
+from host.host import opening as host_opening, transition as host_transition, closing as host_closing
 from voice import speak, set_save_dir
 from voice.slug import create_debate_dir
 from tui_formatter.console import console
 from tui_formatter.formatter import (
-    print_moderator,
+    print_host,
     print_speaker_label,
-    print_thinking,
     print_tool_assignment,
     print_tool_result,
     print_verdict,
     prompt_motion,
 )
-from tui_formatter.roles import JUDGE, MODERATOR, SPEAKER_A, SPEAKER_B
+from tui_formatter.roles import JUDGE, HOST, SPEAKER_A, SPEAKER_B, Role
 
 load_dotenv()
 logging.basicConfig(level=getattr(logging, os.getenv("LOG_LEVEL", "WARNING").upper(), logging.WARNING), format="%(name)s: %(message)s")
@@ -74,12 +73,14 @@ def stream_agent_with_tools(
     tools: list[BaseTool] = None,
     tool_schemas: list[dict] = None,
     role_style: str = "",
+    role: Role | None = None,
     registry: ToolRegistry = None,
 ) -> str:
     """Stream an agent's response character-by-character via Rich console."""
     tools = tools or []
     tool_schemas = tool_schemas or []
     registry = registry or ToolRegistry()
+    role = role or SPEAKER_A
 
     all_messages = (
         [{"role": "system", "content": system_prompt}] + messages
@@ -88,20 +89,23 @@ def stream_agent_with_tools(
     )
 
     # 1. Initial non-streaming call to detect tool calls
-    response = client.chat(
-        model=MODEL,
-        messages=all_messages,
-        tools=tool_schemas or None,
-    )
+    with console.status(f"  {role.icon} {role.label} — Thinking...", spinner="dots"):
+        response = client.chat(
+            model=MODEL,
+            messages=all_messages,
+            tools=tool_schemas or None,
+        )
 
     # 2. No tool calls — stream the text for TUI effect
     if not response.message or not response.message.tool_calls:
-        stream = client.chat(
-            model=MODEL,
-            messages=all_messages,
-            stream=True,
-        )
+        with console.status(f"  {role.icon} {role.label} — Speaking...", spinner="dots"):
+            stream = client.chat(
+                model=MODEL,
+                messages=all_messages,
+                stream=True,
+            )
 
+        print_speaker_label(role)
         full_response = ""
         for chunk in stream:
             if chunk.message and chunk.message.content:
@@ -116,8 +120,8 @@ def stream_agent_with_tools(
     tool_results = []
     for tool_call in response.message.tool_calls:
         tool = registry.get(tool_call.function.name)
-
-        result = tool.execute(**tool_call.function.arguments)
+        with console.status(f"  {role.icon} {role.label} — Calling {tool.name}...", spinner="dots"):
+            result = tool.execute(**tool_call.function.arguments)
         print_tool_result(tool.name, result)
         tool_results.append(
             {
@@ -150,11 +154,13 @@ def stream_agent_with_tools(
         "content": "Incorporate these tool results directly into your argument. Cite specific findings, reference numbers, and quote authorities. Do not just mention that you used a tool — argue from the evidence it provided.",
     })
 
-    final_stream = client.chat(
-        model=MODEL,
-        messages=all_messages,
-        stream=True,
-    )
+    with console.status(f"  {role.icon} {role.label} — Thinking...", spinner="dots"):
+        final_stream = client.chat(
+            model=MODEL,
+            messages=all_messages,
+            stream=True,
+        )
+    print_speaker_label(role)
     full_response = ""
     for chunk in final_stream:
         if chunk.message and chunk.message.content:
@@ -170,30 +176,34 @@ def call_agent(
     system_prompt: str = "",
     tools: list[BaseTool] = None,
     tool_schemas: list[dict] = None,
+    role: Role | None = None,
     registry: ToolRegistry = None,
 ) -> str:
     """Call an agent without streaming (returns full response at once)."""
     tools = tools or []
     tool_schemas = tool_schemas or []
     registry = registry or ToolRegistry()
+    role = role or JUDGE
 
     all_messages = (
         [{"role": "system", "content": system_prompt}] + messages
         if system_prompt
         else messages
     )
-    response = client.chat(
-        model=MODEL,
-        messages=all_messages,
-        tools=tool_schemas or None,
-    )
+    with console.status(f"  {role.icon} {role.label} — Thinking...", spinner="dots"):
+        response = client.chat(
+            model=MODEL,
+            messages=all_messages,
+            tools=tool_schemas or None,
+        )
 
     if response.message and response.message.tool_calls:
         tool_results = []
 
         for tool_call in response.message.tool_calls:
             tool = registry.get(tool_call.function.name)
-            result = tool.execute(**tool_call.function.arguments)
+            with console.status(f"  {role.icon} {role.label} — Calling {tool.name}...", spinner="dots"):
+                result = tool.execute(**tool_call.function.arguments)
             print_tool_result(tool.name, result)
             tool_results.append(
                 {
@@ -223,10 +233,11 @@ def call_agent(
             "content": "Incorporate these tool results directly into your verdict. Cite specific findings and reference the evidence provided by the tools.",
         })
 
-        final_response = client.chat(
-            model=MODEL,
-            messages=all_messages,
-        )
+        with console.status(f"  {role.icon} {role.label} — Thinking...", spinner="dots"):
+            final_response = client.chat(
+                model=MODEL,
+                messages=all_messages,
+            )
 
         return final_response.message.content if final_response.message else ""
 
@@ -251,22 +262,23 @@ def run_debate(
     if voice_enabled:
         set_save_dir(create_debate_dir(motion))
 
-    opening_text = moderator_opening(client, MODEL, motion, format_type="public")
+    with console.status(f"  {HOST.icon} {HOST.label} — Thinking...", spinner="dots"):
+        opening_text = host_opening(client, MODEL, motion, format_type="public")
     if opening_text:
-        print_moderator(opening_text)
+        print_host(opening_text)
         if voice_enabled:
-            speak(opening_text, role="moderator", label="opening")
+            speak(opening_text, role="host", label="opening")
 
     speaker_a_msgs = [
         {
             "role": "user",
-            "content": f"The moderator has just given you the floor. The motion is: {motion}. Open the debate.",
+            "content": f"The host has just given you the floor. The motion is: {motion}. Open the debate.",
         }
     ]
     speaker_b_msgs = [
         {
             "role": "user",
-            "content": f"The moderator has just turned to you. The motion is: {motion}. Respond to {SPEAKER_A.label}'s argument.",
+            "content": f"The host has just turned to you. The motion is: {motion}. Respond to {SPEAKER_A.label}'s argument.",
         }
     ]
 
@@ -275,15 +287,15 @@ def run_debate(
 
     for round_num in range(max_rounds):
         if round_num > 0:
-            transition_text = moderator_transition(
-                client, MODEL, transcript, SPEAKER_A.label, round_num + 1, max_rounds
-            )
+            with console.status(f"  {HOST.icon} {HOST.label} — Thinking...", spinner="dots"):
+                transition_text = host_transition(
+                    client, MODEL, transcript, SPEAKER_A.label, round_num + 1, max_rounds
+                )
             if transition_text:
-                print_moderator(transition_text)
+                print_host(transition_text)
                 if voice_enabled:
-                    speak(transition_text, role="moderator", label=f"transition_round_{round_num + 1}")
+                    speak(transition_text, role="host", label=f"transition_round_{round_num + 1}")
 
-        print_speaker_label(SPEAKER_A)
         a_response = stream_agent_with_tools(
             (
                 speaker_a_msgs + format_opponent_argument(SPEAKER_B.label, last_b_response)
@@ -294,6 +306,7 @@ def run_debate(
             tools=tools_a,
             tool_schemas=schemas_a,
             role_style=SPEAKER_A.text_style,
+            role=SPEAKER_A,
             registry=registry,
         )
         a_response = enforce_limit(a_response, max_chars)
@@ -302,15 +315,15 @@ def run_debate(
         if voice_enabled:
             speak(a_response, role="speaker_a", label=f"round_{round_num + 1}")
 
-        transition_text = moderator_transition(
-            client, MODEL, transcript, SPEAKER_B.label, round_num + 1, max_rounds
-        )
+        with console.status(f"  {HOST.icon} {HOST.label} — Thinking...", spinner="dots"):
+            transition_text = host_transition(
+                client, MODEL, transcript, SPEAKER_B.label, round_num + 1, max_rounds
+            )
         if transition_text:
-            print_moderator(transition_text)
+            print_host(transition_text)
             if voice_enabled:
-                speak(transition_text, role="moderator", label=f"transition_round_{round_num + 1}_b")
+                speak(transition_text, role="host", label=f"transition_round_{round_num + 1}_b")
 
-        print_speaker_label(SPEAKER_B)
         b_response = stream_agent_with_tools(
             (
                 speaker_b_msgs + format_opponent_argument(SPEAKER_A.label, a_response)
@@ -321,6 +334,7 @@ def run_debate(
             tools=tools_b,
             tool_schemas=schemas_b,
             role_style=SPEAKER_B.text_style,
+            role=SPEAKER_B,
             registry=registry,
         )
         b_response = enforce_limit(b_response, max_chars)
@@ -331,11 +345,12 @@ def run_debate(
 
         last_b_response = b_response
 
-    closing_text = moderator_closing(client, MODEL, transcript, format_type="public")
+    with console.status(f"  {HOST.icon} {HOST.label} — Thinking...", spinner="dots"):
+        closing_text = host_closing(client, MODEL, transcript, format_type="public")
     if closing_text:
-        print_moderator(closing_text)
+        print_host(closing_text)
         if voice_enabled:
-            speak(closing_text, role="moderator", label="closing")
+            speak(closing_text, role="host", label="closing")
 
     return transcript
 
@@ -362,12 +377,12 @@ def judge_debate(
         }
     ]
 
-    print_thinking(JUDGE)
     verdict = call_agent(
         judge_input,
         JUDGE_SYSTEM_PROMPT.format(motion=motion, MAX_CHARS=max_chars, speaker_a_label=SPEAKER_A.label, speaker_b_label=SPEAKER_B.label),
         tools=judge_tools,
         tool_schemas=judge_schemas,
+        role=JUDGE,
         registry=registry,
     )
     verdict = enforce_limit(verdict, max_chars)

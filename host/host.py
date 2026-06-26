@@ -1,14 +1,14 @@
-"""Moderator agent — TV debate host that introduces, transitions, and closes."""
+"""Host agent — TV debate host that introduces, transitions, and closes."""
 
 from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
 
-from moderator.moderator_prompt import (
-    MODERATOR_CLOSING_PROMPT,
-    MODERATOR_OPENING_PROMPT,
-    MODERATOR_TRANSITION_PROMPT,
+from host.host_prompt import (
+    HOST_CLOSING_PROMPT,
+    HOST_OPENING_PROMPT,
+    HOST_TRANSITION_PROMPT,
 )
 
 from tui_formatter.roles import SPEAKER_A, SPEAKER_B
@@ -18,16 +18,16 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-MAX_MODERATOR_CHARS = 300
+MAX_HOST_CHARS = 500
 
 
 def _format_transcript(transcript: list[tuple[str, str]]) -> str:
-    """Format transcript entries into a readable block for the moderator."""
+    """Format transcript entries into a readable block for the host."""
     return "\n".join(f"{speaker}: {content}" for speaker, content in transcript)
 
 
 def opening(client: Client, model: str, motion: str, format_type: str = "public") -> str:
-    """Generate the moderator's opening introduction.
+    """Generate the host's opening introduction.
 
     Args:
         client: Ollama client instance.
@@ -36,7 +36,7 @@ def opening(client: Client, model: str, motion: str, format_type: str = "public"
         format_type: "public" or "proposer_critic" — affects role labels.
 
     Returns:
-        The moderator's opening text.
+        The host's opening text.
     """
     if format_type == "proposer_critic":
         role_context = (
@@ -56,15 +56,15 @@ def opening(client: Client, model: str, motion: str, format_type: str = "public"
     try:
         response = client.chat(
             model=model,
-            messages=[{"role": "system", "content": MODERATOR_OPENING_PROMPT}] + messages,
+            messages=[{"role": "system", "content": HOST_OPENING_PROMPT}] + messages,
         )
         text = response.message.content if response.message else ""
     except Exception as e:
-        logger.warning("Moderator opening failed: %s. Skipping moderator segment.", e)
+        logger.warning("Host opening failed: %s. Skipping host segment.", e)
         return ""
 
-    if len(text) > MAX_MODERATOR_CHARS:
-        text = text[:MAX_MODERATOR_CHARS].rsplit(".", 1)[0] + "."
+    if len(text) > MAX_HOST_CHARS:
+        text = text[:MAX_HOST_CHARS].rsplit(".", 1)[0] + "."
 
     return text.strip()
 
@@ -88,7 +88,7 @@ def transition(
         total_rounds: Total number of rounds.
 
     Returns:
-        The moderator's transition text.
+        The host's transition text.
     """
     transcript_text = _format_transcript(transcript_so_far)
     prompt = (
@@ -103,15 +103,15 @@ def transition(
     try:
         response = client.chat(
             model=model,
-            messages=[{"role": "system", "content": MODERATOR_TRANSITION_PROMPT}] + messages,
+            messages=[{"role": "system", "content": HOST_TRANSITION_PROMPT}] + messages,
         )
         text = response.message.content if response.message else ""
     except Exception as e:
-        logger.warning("Moderator transition failed: %s. Skipping moderator segment.", e)
+        logger.warning("Host transition failed: %s. Skipping host segment.", e)
         return ""
 
-    if len(text) > MAX_MODERATOR_CHARS:
-        text = text[:MAX_MODERATOR_CHARS].rsplit(".", 1)[0] + "."
+    if len(text) > MAX_HOST_CHARS:
+        text = text[:MAX_HOST_CHARS].rsplit(".", 1)[0] + "."
 
     return text.strip()
 
@@ -122,7 +122,7 @@ def closing(
     transcript: list[tuple[str, str]],
     format_type: str = "public",
 ) -> str:
-    """Generate the moderator's closing before the judge.
+    """Generate the host's closing before the judge.
 
     Args:
         client: Ollama client instance.
@@ -131,7 +131,7 @@ def closing(
         format_type: "public" or "proposer_critic".
 
     Returns:
-        The moderator's closing text.
+        The host's closing text.
     """
     transcript_text = _format_transcript(transcript)
     prompt = f"The debate is over. Here is the full transcript:\n{transcript_text}\n\nWrap it up and hand off to the judge."
@@ -141,14 +141,14 @@ def closing(
     try:
         response = client.chat(
             model=model,
-            messages=[{"role": "system", "content": MODERATOR_CLOSING_PROMPT}] + messages,
+            messages=[{"role": "system", "content": HOST_CLOSING_PROMPT}] + messages,
         )
         text = response.message.content if response.message else ""
     except Exception as e:
-        logger.warning("Moderator closing failed: %s. Skipping moderator segment.", e)
+        logger.warning("Host closing failed: %s. Skipping host segment.", e)
         return ""
 
-    if len(text) > MAX_MODERATOR_CHARS:
-        text = text[:MAX_MODERATOR_CHARS].rsplit(".", 1)[0] + "."
+    if len(text) > MAX_HOST_CHARS:
+        text = text[:MAX_HOST_CHARS].rsplit(".", 1)[0] + "."
 
     return text.strip()

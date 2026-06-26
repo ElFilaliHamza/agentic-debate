@@ -76,7 +76,7 @@ class TestSplitTextSentences:
 class TestSplitTextRealWorld:
     """Realistic debate text patterns."""
 
-    def test_moderator_text(self):
+    def test_host_text(self):
         text = (
             "Someone is programming your reality. The stakes are your mind. "
             "Tonight we debate whether governments should regulate social media "
